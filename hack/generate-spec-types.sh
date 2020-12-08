@@ -60,6 +60,22 @@ for op in "${operations[@]}"; do
   sed "s/{state}/${op}/g" ./hack/state_interface_impl.template >>"./${package}/zz_generated.types_state_impl.go"
 done
 
+# Change the return values of databasedswitch type
+awk 'BEGIN{}{
+if($3=="Databasedswitch)"){
+        if($4=="GetMetadata()"){
+                $8=substr($8,0,2)"DatabasedswitchCommon"substr($8,2);
+        } else {
+                $8=substr($8,0,3)"DatabasedswitchCommon"substr($8,3);
+        }
+} 
+print $0;
+}
+END {}' ./${package}/zz_generated.types_state_impl.go > tmp && mv tmp ./${package}/zz_generated.types_state_impl.go
+
+# Delete the databasedswitch generated type
+sed -i -e '/type Databasedswitch struct/,+34d' ./${package}/zz_generated.types_workflow.go
+
 go fmt ./...
 
 make addheaders
